@@ -4,9 +4,21 @@ import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, collection, getDocs, query, where } from "firebase/firestore";
 import { logout, setUser, setAuthLoading } from "../Redux/Slice/AuthSlice";
 import { auth, db } from "../Config/Firebaseconfig";
+import { useNavigate } from "react-router";
 
 export const useAuthListener = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        navigate("/dashboard");
+      } else {
+        navigate("/");
+      }
+    });
+  }, []);
 
   useEffect(() => {
     dispatch(setAuthLoading(true));
