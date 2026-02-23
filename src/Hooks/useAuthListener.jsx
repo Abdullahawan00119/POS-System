@@ -11,14 +11,16 @@ export const useAuthListener = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        navigate("/dashboard");
-      } else {
-        navigate("/");
-      }
-    });
-  }, []);
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    if (!user) return;
+
+    if (window.location.pathname === "/login" || window.location.pathname === "/signup") {
+      navigate("/dashboard", { replace: true });
+    }
+  });
+
+  return () => unsubscribe();
+}, []);
 
   useEffect(() => {
     dispatch(setAuthLoading(true));
