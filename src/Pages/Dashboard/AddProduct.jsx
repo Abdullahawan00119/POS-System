@@ -114,7 +114,7 @@ const AddProduct = () => {
         sellingPrice: Number(data.sellingPrice),
         costPrice: Number(data.costPrice),
         stock: Number(data.stock),
-        notifyQuantity: Number(data.stock),
+        notifyQuantity: Number(data.notifyQuantity),
         createdAt: serverTimestamp(),
       };
       await addDoc(collection(db, "products"), productData);
