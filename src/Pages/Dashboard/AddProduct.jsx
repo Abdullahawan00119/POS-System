@@ -3,14 +3,82 @@ import { useForm } from "react-hook-form";
 import { db } from "../../Config/Firebaseconfig";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { Html5QrcodeScanner } from "html5-qrcode";
-import { 
-  LucideBarcode, Camera, PackagePlus, DollarSign, 
-  Archive, Layers, Coffee, Smartphone, Utensils, Box, ChevronDown, Sparkles, TrendingUp
+import {
+  LucideBarcode, Camera, PackagePlus, DollarSign,
+  Archive, Layers, Coffee, Smartphone, Utensils, Box, ChevronDown, Sparkles, TrendingUp,
+  Bell
 } from "lucide-react";
+import * as yup from "yup";
+import { yupResolver } from "@hookform/resolvers/yup";
+
+/* Yup Validation Schema */
+const productSchema = yup.object({
+  category: yup
+    .string()
+    .required("Category is required"),
+
+  sku: yup
+    .string()
+    .trim()
+    .required("SKU / Barcode is required"),
+
+  name: yup
+    .string()
+    .trim()
+    .min(3, "Product name must be at least 3 characters")
+    .required("Product title is required"),
+
+  costPrice: yup
+    .number()
+    .transform((value, originalValue) =>
+      originalValue === "" ? undefined : value
+    )
+    .typeError("Cost price must be a number")
+    // .positive("Cost price must be greater than 0")
+    .min(0, "Cost price cannot be negative")
+    .required("Cost price is required"),
+
+  sellingPrice: yup
+    .number()
+    .transform((value, originalValue) =>
+      originalValue === "" ? undefined : value
+    )
+    .typeError("Selling price must be a number")
+    .min(0, "Selling price cannot be negative")
+    .required("Selling price is required")
+    .test(
+    "is-greater-than-cost",
+    "Selling price must be greater than cost price",
+    function (value) {
+      const { costPrice } = this.parent;
+      if (value === undefined || costPrice === undefined) return true;
+      return value > costPrice;
+    }
+  ),
+
+  stock: yup
+    .number()
+    .typeError("Stock must be a number")
+    .integer("Stock must be a whole number")
+    .min(0, "Stock cannot be negative")
+    .required("Initial stock is required"),
+
+  notifyQuantity: yup
+    .number()
+    .typeError("Notify quantity must be a number")
+    .integer("Notify quantity must be a whole number")
+    .min(0, "Notify quantity cannot be negative")
+    .required("Notify quantity is required")
+    .max(
+      yup.ref("stock"),
+      "Notify quantity cannot be greater than available stock"
+    ),
+}).required();
 
 const AddProduct = () => {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const { register, handleSubmit, reset, setFocus, setValue, watch, formState: { errors } } = useForm({
+    resolver: yupResolver(productSchema),
     defaultValues: { category: "General" }
   });
 
@@ -34,7 +102,7 @@ const AddProduct = () => {
         setIsCameraOpen(false);
         setFocus("name");
         scanner.clear();
-      }, () => {});
+      }, () => { });
     }
     return () => scanner?.clear();
   }, [isCameraOpen, setValue, setFocus]);
@@ -46,6 +114,7 @@ const AddProduct = () => {
         sellingPrice: Number(data.sellingPrice),
         costPrice: Number(data.costPrice),
         stock: Number(data.stock),
+        notifyQuantity: Number(data.stock),
         createdAt: serverTimestamp(),
       };
       await addDoc(collection(db, "products"), productData);
@@ -57,7 +126,7 @@ const AddProduct = () => {
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-3 md:p-10 font-sans text-slate-900">
       <div className="max-w-6xl mx-auto">
-        
+
         {/* --- HEADER BENTO BOX --- */}
         <div className="bg-white rounded-[2.5rem] p-8 mb-8 border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-5">
@@ -78,7 +147,7 @@ const AddProduct = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
+
           {/* --- LEFT: SCANNER MODULE --- */}
           <div className="lg:col-span-4 flex flex-col gap-6">
             <div className="bg-white p-2 rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
@@ -87,9 +156,8 @@ const AddProduct = () => {
                 <button
                   type="button"
                   onClick={() => setIsCameraOpen(!isCameraOpen)}
-                  className={`w-full py-5 rounded-[2rem] font-black transition-all duration-500 flex items-center justify-center gap-3 ${
-                    isCameraOpen ? "bg-rose-50 text-rose-600" : "bg-slate-900 text-white hover:bg-blue-600 shadow-2xl shadow-blue-200"
-                  }`}
+                  className={`w-full py-5 rounded-[2rem] font-black transition-all duration-500 flex items-center justify-center gap-3 ${isCameraOpen ? "bg-rose-50 text-rose-600" : "bg-slate-900 text-white hover:bg-blue-600 shadow-2xl shadow-blue-200"
+                    }`}
                 >
                   <Camera className="w-5 h-5" />
                   {isCameraOpen ? "Deactivate Lens" : "Initialize Scanner"}
@@ -113,14 +181,14 @@ const AddProduct = () => {
           {/* --- RIGHT: FORM MODULE --- */}
           <div className="lg:col-span-8">
             <form onSubmit={handleSubmit(onSubmit)} className="bg-white p-8 md:p-12 rounded-[3rem] border border-slate-100 shadow-sm space-y-8">
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                
+
                 {/* CATEGORY DROPDOWN */}
                 <div className="space-y-3">
                   <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Category</label>
                   <div className="relative group">
-                    <select 
+                    <select
                       {...register("category")}
                       className="w-full appearance-none bg-slate-50 border-none p-5 rounded-2xl font-bold text-slate-700 focus:ring-4 focus:ring-blue-100 transition-all cursor-pointer"
                     >
@@ -130,6 +198,12 @@ const AddProduct = () => {
                     </select>
                     <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-hover:text-blue-500 transition-colors" />
                   </div>
+                  
+                  {errors.category && (
+                    <p className="text-red-500 text-xs mt-1 ml-1 font-semibold">
+                      {errors.category.message}
+                    </p>
+                  )}
                 </div>
 
                 {/* SKU */}
@@ -137,22 +211,34 @@ const AddProduct = () => {
                   <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">SKU / Barcode</label>
                   <div className="relative">
                     <LucideBarcode className="absolute left-5 top-1/2 -translate-y-1/2 text-blue-500" size={18} />
-                    <input 
+                    <input
                       {...register("sku", { required: true })}
                       placeholder="Automatic ID..."
                       className="w-full bg-slate-50 border-none p-5 pl-14 rounded-2xl font-mono font-bold text-slate-700 focus:ring-4 focus:ring-blue-100 transition-all"
                     />
                   </div>
+
+                  {errors.sku && (
+                    <p className="text-red-500 text-xs mt-1 ml-1 font-semibold">
+                      {errors.sku.message}
+                    </p>
+                  )}
                 </div>
 
                 {/* NAME */}
                 <div className="space-y-3 md:col-span-2">
                   <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Product Title</label>
-                  <input 
+                  <input
                     {...register("name", { required: true })}
                     placeholder="e.g. Premium Wireless Audio X2"
                     className="w-full bg-slate-50 border-none p-5 rounded-2xl font-bold text-slate-700 focus:ring-4 focus:ring-blue-100 transition-all"
                   />
+
+                  {errors.name && (
+                    <p className="text-red-500 text-xs mt-1 ml-1 font-semibold">
+                      {errors.name.message}
+                    </p>
+                  )}
                 </div>
 
                 {/* COST */}
@@ -160,12 +246,19 @@ const AddProduct = () => {
                   <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Cost (Investment)</label>
                   <div className="relative">
                     <DollarSign className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                    <input 
+                    <input
                       type="number" step="0.01"
+                      min={0}
                       {...register("costPrice", { required: true })}
                       className="w-full bg-slate-50 border-none p-5 pl-12 rounded-2xl font-bold text-slate-700 focus:ring-4 focus:ring-blue-100 transition-all"
                     />
                   </div>
+
+                  {errors.costPrice && (
+                    <p className="text-red-500 text-xs mt-1 ml-1 font-semibold">
+                      {errors.costPrice.message}
+                    </p>
+                  )}
                 </div>
 
                 {/* SELLING */}
@@ -173,25 +266,59 @@ const AddProduct = () => {
                   <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Price (Market)</label>
                   <div className="relative">
                     <DollarSign className="absolute left-5 top-1/2 -translate-y-1/2 text-green-500" size={18} />
-                    <input 
+                    <input
                       type="number" step="0.01"
+                      min={0}
                       {...register("sellingPrice", { required: true })}
                       className="w-full bg-green-50 border-none p-5 pl-12 rounded-2xl font-bold text-green-700 focus:ring-4 focus:ring-green-100 transition-all"
                     />
                   </div>
+
+                  {errors.sellingPrice && (
+                    <p className="text-red-500 text-xs mt-1 ml-1 font-semibold">
+                      {errors.sellingPrice.message}
+                    </p>
+                  )}
                 </div>
 
                 {/* STOCK */}
-                <div className="space-y-3 md:col-span-2">
+                <div className="space-y-3">
                   <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Initial Stock</label>
                   <div className="relative">
                     <Archive className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                    <input 
+                    <input
                       type="number"
+                      min={0}
                       {...register("stock", { required: true })}
                       className="w-full bg-slate-50 border-none p-5 pl-12 rounded-2xl font-bold text-slate-700 focus:ring-4 focus:ring-blue-100 transition-all"
                     />
                   </div>
+
+                  {errors.stock && (
+                    <p className="text-red-500 text-xs mt-1 ml-1 font-semibold">
+                      {errors.stock.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* NOTIFY QUANTITY */}
+                <div className="space-y-3">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Notify Quantity</label>
+                  <div className="relative">
+                    <Bell className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input
+                      type="number"
+                      min={0}
+                      {...register("notifyQuantity", { required: true })}
+                      className="w-full bg-slate-50 border-none p-5 pl-12 rounded-2xl font-bold text-slate-700 focus:ring-4 focus:ring-blue-100 transition-all"
+                    />
+                  </div>
+                  
+                  {errors.notifyQuantity && (
+                    <p className="text-red-500 text-xs mt-1 ml-1 font-semibold">
+                      {errors.notifyQuantity.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
