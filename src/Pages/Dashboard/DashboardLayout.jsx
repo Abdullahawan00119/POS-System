@@ -3,7 +3,8 @@ import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, PackagePlus, Box, 
   Menu, X, LogOut, Settings, 
-  Zap, ChevronRight 
+  Zap, ChevronRight, 
+  Store
 } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { auth } from "../../Config/Firebaseconfig";
@@ -20,6 +21,7 @@ const DashboardLayout = () => {
     { name: "Overview", path: "/dashboard", icon: <LayoutDashboard size={20} /> },
     { name: "Add Product", path: "/dashboard/addproduct", icon: <PackagePlus size={20} /> },
     { name: "Inventory", path: "/dashboard/inventory", icon: <Box size={20} /> },
+    { name: "Create Branch", path: "/dashboard/createbranch", icon: <Store size={20}/> },
   ];
 
   const isActive = (path) => location.pathname === path;
