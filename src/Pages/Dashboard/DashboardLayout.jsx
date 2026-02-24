@@ -22,6 +22,7 @@ const DashboardLayout = () => {
     { name: "Add Product", path: "/dashboard/addproduct", icon: <PackagePlus size={20} /> },
     { name: "Inventory", path: "/dashboard/inventory", icon: <Box size={20} /> },
     { name: "Create Branch", path: "/dashboard/createbranch", icon: <Store size={20}/> },
+    { name: "Branches", path: "/dashboard/allbranches", icon: <Store size={20}/> },
   ];
 
   const isActive = (path) => location.pathname === path;

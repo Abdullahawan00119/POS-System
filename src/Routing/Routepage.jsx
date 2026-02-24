@@ -10,6 +10,7 @@ import DashboardLayout from "../Pages/Dashboard/DashboardLayout.jsx";
 import Overview from "../Pages/Dashboard/Overview.jsx";
 import Inventory from "../Pages/Dashboard/Inventory.jsx";
 import CreateBranch from "../Pages/Dashboard/CreateBranch .jsx";
+import BranchList from "../Pages/Dashboard/BranchList.jsx";
 
 export default function Routepage() {
   useAuthListener(); // 🔑 top-level call
@@ -28,6 +29,7 @@ export default function Routepage() {
         <Route path="addproduct" element={<AddProduct />} />
         <Route path="inventory" element={<Inventory />} />
         <Route path="createbranch" element={<CreateBranch />} />
+        <Route path="allbranches" element={<BranchList />} />
       </Route>
       <Route
         path="/"
