@@ -9,6 +9,7 @@ import AddProduct from "../Pages/Dashboard/AddProduct.jsx";
 import DashboardLayout from "../Pages/Dashboard/DashboardLayout.jsx";
 import Overview from "../Pages/Dashboard/Overview.jsx";
 import Inventory from "../Pages/Dashboard/Inventory.jsx";
+import CreateBranch from "../Pages/Dashboard/CreateBranch .jsx";
 
 export default function Routepage() {
   useAuthListener(); // 🔑 top-level call
@@ -26,6 +27,7 @@ export default function Routepage() {
         <Route index element={<Overview />} />
         <Route path="addproduct" element={<AddProduct />} />
         <Route path="inventory" element={<Inventory />} />
+        <Route path="createbranch" element={<CreateBranch />} />
       </Route>
       <Route
         path="/"
